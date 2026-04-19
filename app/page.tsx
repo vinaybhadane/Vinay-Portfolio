@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import About from '@/components/About';
@@ -14,30 +14,42 @@ import LoadingScreen from '@/components/LoadingScreen';
 
 export default function Home() {
   useEffect(() => {
-    // Lenis smooth scroll
+    let lenis: any;
+
+    // Lenis smooth scroll initialization
     const initLenis = async () => {
       try {
-        const Lenis = (await import('lenis')).default;
-        const lenis = new Lenis({
+        const LenisModule = (await import('lenis')).default;
+        
+        lenis = new LenisModule({
           duration: 1.4,
           easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
           orientation: 'vertical',
           smoothWheel: true,
         });
 
+        // Fixed: Defined as a const arrow function to avoid ES5 strict mode errors
         const raf = (time: number) => {
-  lenis.raf(time);
-  requestAnimationFrame(raf);
-};
-        requestAnimationFrame(raf);
+          if (lenis) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+          }
+        };
 
-        return () => lenis.destroy();
+        requestAnimationFrame(raf);
       } catch (e) {
-        // Lenis not available, use native scroll
+        console.error('Lenis failed to initialize:', e);
       }
     };
 
     initLenis();
+
+    // Proper cleanup outside the async scope
+    return () => {
+      if (lenis) {
+        lenis.destroy();
+      }
+    };
   }, []);
 
   return (
